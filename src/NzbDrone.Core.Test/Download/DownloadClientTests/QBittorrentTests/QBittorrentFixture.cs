@@ -5,6 +5,7 @@ using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Common.Disk;
 using NzbDrone.Common.Http;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Download.Clients.QBittorrent;
@@ -300,9 +301,15 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.QBittorrentTests
             GivenTorrents(new List<QBittorrentTorrent> { torrent });
             GivenTorrentFiles(torrent.Hash, new List<QBittorrentTorrentFile> { file });
 
-            var path = Subject.GetOutputPath(torrent.Hash);
+            var item = new DownloadClientItem
+            {
+                DownloadId = torrent.Hash,
+                OutputPath = new OsPath(torrent.SavePath)
+            };
 
-            path.Should().Be(Path.Combine(torrent.SavePath, file.Name));
+            var result = Subject.GetImportItem(item, null);
+
+            result.OutputPath.FullPath.Should().Be(Path.Combine(torrent.SavePath, file.Name));
         }
 
         [Test]
@@ -334,9 +341,16 @@ namespace NzbDrone.Core.Test.Download.DownloadClientTests.QBittorrentTests
 
             GivenTorrents(new List<QBittorrentTorrent> { torrent });
             GivenTorrentFiles(torrent.Hash, files);
-            var path = Subject.GetOutputPath(torrent.Hash);
 
-            path.FullPath.Should().Be(Path.Combine(torrent.SavePath, "Droned.S01.12") + Path.DirectorySeparatorChar);
+            var item = new DownloadClientItem
+            {
+                DownloadId = torrent.Hash,
+                OutputPath = new OsPath(torrent.SavePath)
+            };
+
+            var result = Subject.GetImportItem(item, null);
+
+            result.OutputPath.FullPath.Should().Be(Path.Combine(torrent.SavePath, "Droned.S01.12") + Path.DirectorySeparatorChar);
         }
 
         public void missingFiles_item_should_have_required_properties()
